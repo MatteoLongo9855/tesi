@@ -577,7 +577,7 @@ def D_estimators (
         Cl_BB_sim[i, :]= cl_BBi
     
     var_EB= np.var(Cl_EB_sim, axis=0)
-    var_Dest_th = (Cls_th[1,lmin:] + Cl_noiseT) * (Cls_th[2,lmin:] + Cl_noiseP) * (1/(2*ell + 1))
+    var_Dest_th = (Cls_th[1,lmin:] + Cl_noiseP) * (Cls_th[2,lmin:] + Cl_noiseP) * (1/(2*ell + 1))
     var_Dest_sim  = var_EB
     inv_cov= np.diag(1/var_Dest_th)
     bin_cov= P @ inv_cov @ Pt
@@ -627,7 +627,7 @@ def D_estimators (
 
         betas_best_grid[i]=betas[np.argmin(chi2_grid)]
 
-        res = max3.set_xscale('log')inimize(chi2_beta,x0=np.array([0.0]),args=(cl_EB, cl_EE,cl_BB, bin_cov),
+        res = minimize(chi2_beta,x0=np.array([0.0]),args=(cl_EB, cl_EE,cl_BB, bin_cov),
                        method='L-BFGS-B',jac=jacobian, bounds=[(-0.5, 0.5)])   
         betas_best_func[i] = res.x[0]
         print("beta_",i)
