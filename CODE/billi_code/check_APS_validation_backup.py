@@ -5,15 +5,6 @@ import healpy as hp
 import os
 opj = os.path.join
 
-def load_spectra(path,lmin,lmax,Nsky):
-    cls_tot=np.zeros((6,lmax+1,Nsky))
-
-    for isim in np.arange(Nsky):
-        # cls_tot[:,:,isim]=np.load(path+'cl_SpN_isim'+str(isim).zfill(4)+'.npy')
-        cls_tot[:,:,isim]=np.load(path+'cl_isim'+str(isim).zfill(4)+'.npy')
-
-    
-    return cls_tot
 
 def rescaling_spectra(lmin,lmax,Nsky,TT,EE,BB,TE,EB,TB):
     l=np.arange(lmin,lmax+1)
@@ -149,12 +140,12 @@ def main_valid_plot(lmin,lmax, Nsky,
     cl_TT_th, cl_EE_th, cl_BB_th, cl_TE_th, cl_EB_th, cl_TB_th,
     NoiseT, NoiseP, auto, dir_out):
 
-    a_title =[  r'$ C_{\ell}^{TT}$'r'$(\mu K^2)$', \
-            r'$ C_{\ell}^{EE}$'r'$(\mu K^2)$',\
-            r'$ C_{\ell}^{TE}$'r'$(\mu K^2)$',\
-            r'$ C_{\ell}^{BB}$'r'$(\mu K^2)$',\
-            r'$ C_{\ell}^{EB}$'r'$(\mu K^2)$',\
-            r'$ C_{\ell}^{TB}$'r'$(\mu K^2)$']
+    a_title =[  r'$ D_{\ell}^{TT}$'r'$(\mu K^2)$', \
+            r'$ D_{\ell}^{EE}$'r'$(\mu K^2)$',\
+            r'$ D_{\ell}^{TE}$'r'$(\mu K^2)$',\
+            r'$ D_{\ell}^{BB}$'r'$(\mu K^2)$',\
+            r'$ D_{\ell}^{EB}$'r'$(\mu K^2)$',\
+            r'$ D_{\ell}^{TB}$'r'$(\mu K^2)$']
     b_title =[  r'$ \frac{\Delta D_{\ell}^{TT}}{\sigma_{\mu}}$', \
             r'$ \frac{\Delta D_{\ell}^{EE}}{\sigma_{\mu}}$', \
             r'$ \frac{\Delta D_{\ell}^{TE}}{\sigma_{\mu}}$', \
@@ -315,34 +306,22 @@ def main_valid_plot(lmin,lmax, Nsky,
 
 
 def main(lmin,
-        lmax, 
+        nside, 
         Nsky,
         sigmaT,
         auto,
         dir_inp,
         dir_out):
     
-    ## READING THE SIMS
-    # Cls =np.zeros((6,2*Nside+1,Nsky))  
-    # for i in range (Nsky):
-    #     icls=np.load(opj(dir_out,'Cls_from_alm_SpN'+str(i)+'.npy'))
-    #     Cls[:,:,i]= icls
-    # np.save(opj(dir_out,'Cls_from_alm_SpN_ACTpolNoise_lmax4097.npy'),Cls)
-
-    Cls = load_spectra(dir_inp,lmin,lmax,Nsky)#np.load(opj(dir_out,'Cls_from_alm_SpN_lownoise_lmax4000.npy'))
+    lmax = 2*nside
+    Cls=np.load(dir_inp+'cls_sim.npy')
     cl_TT_sim, cl_EE_sim, cl_BB_sim, cl_TE_sim, cl_EB_sim, cl_TB_sim = \
     Cls[0,lmin:lmax+1],Cls[1,lmin:lmax+1],Cls[2,lmin:lmax+1],\
     Cls[3,lmin:lmax+1],Cls[4,lmin:lmax+1],Cls[5,lmin:lmax+1]
     cl_TT_sim, cl_EE_sim, cl_BB_sim, cl_TE_sim, cl_EB_sim, cl_TB_sim = \
     rescaling_spectra(lmin,lmax,Nsky, cl_TT_sim, cl_EE_sim, cl_BB_sim, cl_TE_sim, cl_EB_sim, cl_TB_sim)
     
-
     ## READING THE NOISE
-    # cl_TT_noise, cl_EE_noise, cl_BB_noise, cl_TE_noise, cl_EB_noise, cl_TB_noise = \
-    # Cls_noise_map[0,lmin:lmax],Cls_noise_map[1,lmin:lmax],Cls_noise_map[2,lmin:lmax],\
-    # Cls_noise_map[3,lmin:lmax],Cls_noise_map[4,lmin:lmax],Cls_noise_map[5,lmin:lmax]
-    # cl_TT_noise, cl_EE_noise, cl_BB_noise, cl_TE_noise, cl_EB_noise, cl_TB_noise = \
-    # rescaling_spectra(lmin,lmax,Nsky, cl_TT_noise, cl_EE_noise, cl_BB_noise, cl_TE_noise, cl_EB_noise, cl_TB_noise)
     NoiseT = np.full(lmax-2+1,(sigmaT*np.deg2rad(1/60))**2)
     NoiseP = 2*NoiseT
     l=np.arange(lmin,lmax+1)
@@ -351,28 +330,17 @@ def main(lmin,
     NoiseP *=ll
    
     ## Reading the fiducial    
-    #cl_TT_th, cl_EE_th, cl_BB_th, cl_TE_th, cl_EB_th, cl_TB_th =\
-    #reading_camb_spectra(lmin, lmax, dir_inp, 'camb_spectra_5000.txt')
-    fid_dir = ''
-    l,TT,EE,BB,TE = np.loadtxt(fid_dir+'ffp10_lensedCls.dat',unpack=True,usecols=(0,1,2,3,4))
+    l,TT,EE,BB,TE = np.loadtxt(dir_inp+'ffp10_lensedCls.dat',unpack=True,usecols=(0,1,2,3,4))
 
     l = l[(lmin-2):(lmax-2+1)]
     ll = l*(l+1)/2/np.pi
-    TT = TT[(lmin-2):(lmax-2+1)]
-    EE = EE[(lmin-2):(lmax-2+1)]
-    BB = BB[(lmin-2):(lmax-2+1)]
-    TE = TE[(lmin-2):(lmax-2+1)]
+    cl_TT_th = TT[(lmin-2):(lmax-2+1)]
+    cl_EE_th = EE[(lmin-2):(lmax-2+1)]
+    cl_BB_th = BB[(lmin-2):(lmax-2+1)]
+    cl_TE_th = TE[(lmin-2):(lmax-2+1)]
 
-    # cl_TT_th = TT/ll
-    # cl_EE_th = EE/ll
-    # cl_BB_th = BB/ll
-    # cl_TE_th = TE/ll
-    cl_TT_th = TT
-    cl_EE_th = EE
-    cl_BB_th = BB
-    cl_TE_th = TE
-    cl_EB_th = np.zeros_like(TT)
-    cl_TB_th = np.zeros_like(TT)
+    cl_EB_th = np.zeros_like(cl_TT_th)
+    cl_TB_th = np.zeros_like(cl_TT_th)
 
     main_valid_plot(lmin,lmax, Nsky,
     cl_TT_sim, cl_EE_sim, cl_BB_sim, cl_TE_sim, cl_EB_sim, cl_TB_sim,
@@ -382,12 +350,9 @@ def main(lmin,
 
 if __name__ == '__main__':
     main(lmin= 2,
-        lmax = 4096, 
+        nside =128,
         Nsky = 1000,
-        sigmaT=4.0,
-        auto = False, # auto or cross spectrum
-        dir_inp = 'APS_from_maps_cross_fiducialffp10_lensedCls_nside2048_lmax4096_noiseT1.0uKarcmin_nobeam/',
-        dir_out = '')
-        # dir_inp = '/marconi_scratch/userexternal/mbortola/CB_QML_alpha/estimator_CB_EE_bilinear/APS_from_maps_cross_lmax2048/',
-        # dir_out = '/marconi_scratch/userexternal/mbilli00/CB_QML_alpha/estimator_CB_EE_bilinear/Vanilla_Plancklike/Validation_sims/')
-
+        sigmaT=2.0,
+        auto = True, # auto or cross spectrum
+        dir_inp = 'valid_auto_spectra/',
+        dir_out = 'valid_auto_spectra/')
