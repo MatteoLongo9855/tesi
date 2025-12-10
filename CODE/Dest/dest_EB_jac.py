@@ -400,7 +400,7 @@ def validation_plot(
         label=r'$\langle C_\ell^{TT}\rangle \pm \sigma_{\bar C_\ell}$'
     )
     ax1.plot(ell_arr, cl_TT_th, label=r'$C_{\ell,\mathrm{th}}^{TT}$')
-    ax1.set_xscale('log')
+    ax1.set_xscale('linear')
     ax1.set_yscale('log')
     ax1.set_ylabel(r'$C_\ell^{TT}$')
     ax1.legend(fontsize=8)
@@ -410,7 +410,7 @@ def validation_plot(
     ax2.plot(ell_arr, delta_TT, 'o', markersize=2)
     ax2.axhline(3, color='red', ls='--')
     ax2.axhline(-3, color='red', ls='--')
-    ax2.set_xscale('log')
+    ax2.set_xscale('linear')
     ax2.set_ylim(-5, 5)
     ax2.set_xlabel(r'$\ell$')
     ax2.set_ylabel(r'$\Delta/\sigma_noise$')
@@ -439,7 +439,7 @@ def validation_plot(
         label=r'$\langle C_\ell^{EE}\rangle \pm \sigma_{\bar C_\ell}$'
     )
     ax1.plot(ell_arr, cl_EE_th, label=r'$C_{\ell,\mathrm{th}}^{EE}$')
-    ax1.set_xscale('log')
+    ax1.set_xscale('linear')
     ax1.set_yscale('log')
     ax1.set_ylabel(r'$C_\ell^{EE}$')
     ax1.legend(fontsize=8)
@@ -449,7 +449,7 @@ def validation_plot(
     ax2.plot(ell_arr, delta_EE, 'o', markersize=2)
     ax2.axhline(3, color='red', ls='--')
     ax2.axhline(-3, color='red', ls='--')
-    ax2.set_xscale('log')
+    ax2.set_xscale('linear')
     ax2.set_ylim(-5, 5)
     ax2.set_xlabel(r'$\ell$')
     ax2.set_ylabel(r'$\Delta/\sigma_noise$')
@@ -516,7 +516,7 @@ def validation_plot(
         label=r'$\langle C_\ell^{TE}\rangle \pm \sigma_{\bar C_\ell}$'
     )
     ax1.plot(ell_arr, cl_TE_th, label=r'$C_{\ell,\mathrm{th}}^{TE}$')
-    ax1.set_xscale('log')
+    ax1.set_xscale('linear')
     ax1.set_yscale('linear')
     ax1.set_ylabel(r'$C_\ell^{TE}$')
     ax1.legend(fontsize=8)
@@ -651,7 +651,7 @@ def D_estimators (
          '\n' + rf'$\sigma = {sigma_beta_grid:.2e}$',
          transform=ax1.transAxes, va='top')
 
-    ax2.hist(betas_best_func, bins='sqrt', edgecolor='black')
+    ax2.hist(betas_best_func, bins=nbins, edgecolor='black')
     ax2.set_xlabel(r'$\beta_{\rm best}^{\rm (minimize)}$')
     ax2.set_title(r'Distribuzione di $\beta_{\rm best}$ (minimize)')
     ax2.axvline(mean_beta_func, color='red', linestyle='--')
@@ -705,7 +705,7 @@ def main():
     newmaps = True  # se True, genera nuove mappe altrimenti carica quelle esistenti
     new_spectra = True # se True, genera nuovi spettri, altrimenti carica quelli già esistenti
     real_mask = True  # se True, importa una maschera altrimenti genera una maschera identità
-    is_Dell= False
+    is_Dell= True
     
     purify_e = False
     purify_b = False
@@ -762,7 +762,7 @@ def main():
                         cl_TT_th, cl_EE_th, cl_BB_th, cl_TE_th,
                         ell_arr, plots_dir, nsims, lmax, real_mask, 
                         sigma_noise)
-    
+    exit()
 
     D_estimators(nsims, Cls_out_dir, lmax, 
                  lmin, deltal, std_Cls, 
