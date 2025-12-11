@@ -205,7 +205,6 @@ def calculate_spectrum_pol(
     w_22.read_from(ws_dir + 'w_22_deltaell_' + str(deltal).zfill(1) + '.fits')
 
     N_bin = b.get_n_bands()
-    ll_arr = ell_arr * (ell_arr + 1) / (2 * np.pi)
 
     # 0:TT, 1:EE, 2:BB, 3:TE, 4:TB, 5:EB
     Cls_sims = np.zeros((6, N_bin, nsims))
@@ -282,12 +281,12 @@ def calculate_spectrum_pol(
                 + '_sim' + str(i).zfill(4) + '.txt',
                 np.column_stack([
                     ell_arr,
-                    cl_00[0]/ll_arr,
-                    cl_22[0]/ll_arr,
-                    cl_22[3]/ll_arr,
-                    ((cl_02[0] + cl_20[0])/ll_arr) / 2,
-                    ((cl_02[1] + cl_20[1])/ll_arr) / 2,
-                    ((cl_22[1] + cl_22[2])/ll_arr) / 2
+                    cl_00[0],
+                    cl_22[0],
+                    cl_22[3],
+                    (cl_02[0] + cl_20[0]) / 2,
+                    (cl_02[1] + cl_20[1]) / 2,
+                    (cl_22[1] + cl_22[2]) / 2
                 ]),
                 header='#l TT EE BB TE TB EB'
             )
@@ -401,7 +400,7 @@ def validation_plot(
         label=r'$\langle C_\ell^{TT}\rangle \pm \sigma_{\bar C_\ell}$'
     )
     ax1.plot(ell_arr, cl_TT_th, label=r'$C_{\ell,\mathrm{th}}^{TT}$')
-    ax1.set_xscale('log')
+    ax1.set_xscale('linear')
     ax1.set_yscale('log')
     ax1.set_ylabel(r'$C_\ell^{TT}$')
     ax1.legend(fontsize=8)
@@ -411,7 +410,7 @@ def validation_plot(
     ax2.plot(ell_arr, delta_TT, 'o', markersize=2)
     ax2.axhline(3, color='red', ls='--')
     ax2.axhline(-3, color='red', ls='--')
-    ax2.set_xscale('log')
+    ax2.set_xscale('linear')
     ax2.set_ylim(-5, 5)
     ax2.set_xlabel(r'$\ell$')
     ax2.set_ylabel(r'$\Delta/\sigma_noise$')
@@ -440,7 +439,7 @@ def validation_plot(
         label=r'$\langle C_\ell^{EE}\rangle \pm \sigma_{\bar C_\ell}$'
     )
     ax1.plot(ell_arr, cl_EE_th, label=r'$C_{\ell,\mathrm{th}}^{EE}$')
-    ax1.set_xscale('log')
+    ax1.set_xscale('linear')
     ax1.set_yscale('log')
     ax1.set_ylabel(r'$C_\ell^{EE}$')
     ax1.legend(fontsize=8)
@@ -450,7 +449,7 @@ def validation_plot(
     ax2.plot(ell_arr, delta_EE, 'o', markersize=2)
     ax2.axhline(3, color='red', ls='--')
     ax2.axhline(-3, color='red', ls='--')
-    ax2.set_xscale('log')
+    ax2.set_xscale('linear')
     ax2.set_ylim(-5, 5)
     ax2.set_xlabel(r'$\ell$')
     ax2.set_ylabel(r'$\Delta/\sigma_noise$')
@@ -517,7 +516,7 @@ def validation_plot(
         label=r'$\langle C_\ell^{TE}\rangle \pm \sigma_{\bar C_\ell}$'
     )
     ax1.plot(ell_arr, cl_TE_th, label=r'$C_{\ell,\mathrm{th}}^{TE}$')
-    ax1.set_xscale('log')
+    ax1.set_xscale('linear')
     ax1.set_yscale('linear')
     ax1.set_ylabel(r'$C_\ell^{TE}$')
     ax1.legend(fontsize=8)
@@ -545,7 +544,7 @@ def D_estimators (
         lmin, deltal,std_Cls,
         mean_Cls, plots_dir, P,
         Pt, sigma_noise, var, 
-        Cls_th
+        Cls_th, Cls_dir, cl_TT_th, cl_EE_th, cl_BB_th, cl_TE_th, ell_arr
     ):
     
     mean_Dest = 0.0
@@ -558,8 +557,8 @@ def D_estimators (
     Cl_BB_sim = np.zeros((nsims,mean_Cls.shape[1]))
     Cl_EE_sim = np.zeros((nsims,mean_Cls.shape[1]))
     Cl_EB_sim = np.zeros((nsims,mean_Cls.shape[1]))
-    Cl_noiseT = np.full(lmax-lmin+1,(sigma_noise*np.deg2rad(1/60))**2)
-    Cl_noiseP = np.full(lmax-lmin+1,(2*sigma_noise*np.deg2rad(1/60))**2)
+    Cl_noiseT = np.full(ell_arr.shape[0],(sigma_noise*np.deg2rad(1/60))**2)
+    Cl_noiseP = np.full(ell_arr.shape[0],(2*sigma_noise*np.deg2rad(1/60))**2)
     #Cl_noiseT = np.full(lmax-lmin+1,var)
     #Cl_noiseP = np.full(lmax-lmin+1,4 * var)
 
@@ -570,7 +569,12 @@ def D_estimators (
                 '_deltal'+str(deltal)+'_sim'+str(i).zfill(4) +
                 '.txt', unpack=True
         )
-        
+        """ TT_th, EE_th, BB_th, TE_th = np.loadtxt(
+        Cls_dir + 'ffp10_lensedCls.dat',
+        unpack=True,
+        usecols=(1, 2, 3, 4)
+        ) """
+
         #Cl_TE_sim[i, :]= cl_TEi
         #Cl_TB_sim[i, :]= cl_TBi
         Cl_EB_sim[i, :]= cl_EBi
@@ -578,10 +582,13 @@ def D_estimators (
         Cl_BB_sim[i, :]= cl_BBi
     
     var_EB= np.var(Cl_EB_sim, axis=0)
-    var_Dest_th = (Cls_th[1,lmin:] + Cl_noiseT) * (Cls_th[2,lmin:] + Cl_noiseP) * (1/(2*ell + 1))
+    var_Dest_th = (cl_EE_th + Cl_noiseP) * (cl_BB_th + Cl_noiseP) * (1/(2*ell_arr + 1))
     var_Dest_sim  = var_EB
-    inv_cov= np.diag(1/var_Dest_th)
-    bin_cov= P @ inv_cov @ Pt
+
+    matriceDest=np.diag(var_Dest_th)
+    matricebin= matriceDest
+    
+    bin_cov= np.diag(1/var_Dest_th)
     ####################
     #funzioni utili solo per metodo con minimize
     def chi2_beta(beta, cl_EB, cl_EE,cl_BB, bin_cov):
@@ -598,10 +605,10 @@ def D_estimators (
         for i in range (grad.size):
             betap=np.copy(beta)
             betam=np.copy(beta)
-            betap[i]+=1e-10
-            betam[i]-=1e-10
+            betap[i]+=1e-5
+            betam[i]-=1e-5
             grad[i]=(chi2_beta(betap, cl_EB, cl_EE,cl_BB, bin_cov)-
-                     chi2_beta(betam, cl_EB, cl_EE,cl_BB, bin_cov))/2e-10
+                     chi2_beta(betam, cl_EB, cl_EE,cl_BB, bin_cov))/2e-5
         return grad
     ######################
 
@@ -652,7 +659,7 @@ def D_estimators (
          '\n' + rf'$\sigma = {sigma_beta_grid:.2e}$',
          transform=ax1.transAxes, va='top')
 
-    ax2.hist(betas_best_func, bins='sqrt', edgecolor='black')
+    ax2.hist(betas_best_func, bins=nbins, edgecolor='black')
     ax2.set_xlabel(r'$\beta_{\rm best}^{\rm (minimize)}$')
     ax2.set_title(r'Distribuzione di $\beta_{\rm best}$ (minimize)')
     ax2.axvline(mean_beta_func, color='red', linestyle='--')
@@ -668,9 +675,9 @@ def D_estimators (
             + '_lmax' + str(lmax) + '.png')
     plt.show()
     var_matr= np.diag(var_Dest_th)
-    bin_var = P @ var_matr @ Pt
+    #bin_var = P @ var_matr @ Pt
     sigma_var_sim = np.sqrt(var_Dest_sim)
-    sigma_var_th = np.sqrt(np.diag(bin_var))
+    sigma_var_th = np.sqrt(np.diag(var_matr))
          
    
 
@@ -683,7 +690,8 @@ def D_estimators (
          label=r'$\sigma_{\bar D_\ell}^{\mathrm{th,\,binned}}$')
 
     ax3.legend()
-    ax3.set_xscale('linear')
+    ax3.set_yscale('log')
+    ax3.set_xscale('log')
     ax3.set_xlabel(r'Multipole $\ell$')
     ax3.set_ylabel(r'$\sigma_{\bar D_\ell}$')
     ax3.grid(True, ls='--', alpha=0.2)
@@ -702,10 +710,10 @@ def main():
     Cls_out_dir = root_dir + 'simulazione/spectra_out/'
     plots_dir = root_dir + 'simulazione/plots/'
 
-    newmaps = True  # se True, genera nuove mappe altrimenti carica quelle esistenti
+    newmaps = True # se True, genera nuove mappe altrimenti carica quelle esistenti
     new_spectra = True # se True, genera nuovi spettri, altrimenti carica quelli già esistenti
-    real_mask = True  # se True, importa una maschera altrimenti genera una maschera identità
-    is_Dell= True
+    real_mask = False  # se True, importa una maschera altrimenti genera una maschera identità
+    is_Dell= False
     
     purify_e = False
     purify_b = False
@@ -768,7 +776,7 @@ def main():
                  lmin, deltal, std_Cls, 
                  mean_Cls, plots_dir, P,
                  Pt,sigma_noise,var,
-                 Cls_th)
+                 Cls_th,Cls_dir, cl_TT_th, cl_EE_th, cl_BB_th, cl_TE_th, ell_arr)
 
 
 main()

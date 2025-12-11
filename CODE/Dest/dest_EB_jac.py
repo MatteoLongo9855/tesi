@@ -544,7 +544,7 @@ def D_estimators (
         lmin, deltal,std_Cls,
         mean_Cls, plots_dir, P,
         Pt, sigma_noise, var, 
-        Cls_th
+        Cls_th, Cls_dir
     ):
     
     mean_Dest = 0.0
@@ -557,8 +557,8 @@ def D_estimators (
     Cl_BB_sim = np.zeros((nsims,mean_Cls.shape[1]))
     Cl_EE_sim = np.zeros((nsims,mean_Cls.shape[1]))
     Cl_EB_sim = np.zeros((nsims,mean_Cls.shape[1]))
-    Cl_noiseT = np.full(lmax-lmin+1,(sigma_noise*np.deg2rad(1/60))**2)
-    Cl_noiseP = np.full(lmax-lmin+1,(2*sigma_noise*np.deg2rad(1/60))**2)
+    Cl_noiseT = np.full(lmax-lmin+1,(sigma_noise*np.deg2rad(1/60))**2)*(ell*(ell+1))/(2*np.pi)
+    Cl_noiseP = np.full(lmax-lmin+1,(2*sigma_noise*np.deg2rad(1/60))**2)*(ell*(ell+1))/(2*np.pi)
     #Cl_noiseT = np.full(lmax-lmin+1,var)
     #Cl_noiseP = np.full(lmax-lmin+1,4 * var)
 
@@ -569,7 +569,11 @@ def D_estimators (
                 '_deltal'+str(deltal)+'_sim'+str(i).zfill(4) +
                 '.txt', unpack=True
         )
-        
+        TT_th, EE_th, BB_th, TE_th = np.loadtxt(
+        Cls_dir + 'ffp10_lensedCls.dat',
+        unpack=True,
+        usecols=(1, 2, 3, 4)
+        )
         #Cl_TE_sim[i, :]= cl_TEi
         #Cl_TB_sim[i, :]= cl_TBi
         Cl_EB_sim[i, :]= cl_EBi
@@ -577,10 +581,13 @@ def D_estimators (
         Cl_BB_sim[i, :]= cl_BBi
     
     var_EB= np.var(Cl_EB_sim, axis=0)
-    var_Dest_th = (Cls_th[1,lmin:] + Cl_noiseP) * (Cls_th[2,lmin:] + Cl_noiseP) * (1/(2*ell + 1))
+    var_Dest_th = (EE_th[:lmax-1] + Cl_noiseP) * (BB_th[:lmax-1] + Cl_noiseP) * (1/(2*ell + 1))
     var_Dest_sim  = var_EB
-    inv_cov= np.diag(1/var_Dest_th)
-    bin_cov= P @ inv_cov @ Pt
+
+    matriceDest=np.diag(var_Dest_th)
+    matricebin= P @ matriceDest @ Pt
+    
+    bin_cov= np.diag(1/np.diag(matricebin))
     ####################
     #funzioni utili solo per metodo con minimize
     def chi2_beta(beta, cl_EB, cl_EE,cl_BB, bin_cov):
@@ -648,7 +655,7 @@ def D_estimators (
     ax1.axvline(mean_beta_grid + sigma_beta_grid, color='red', linestyle=':')
     ax1.axvline(mean_beta_grid - sigma_beta_grid, color='red', linestyle=':')
     ax1.text(0.02, 0.95, rf'$\bar\beta = {mean_beta_grid:.2e}$'
-         '\n' + rf'$\sigma = {sigma_beta_grid:.2e}$',
+         '\n' + rf'$\ = {sigma_beta_grid:.2e}$',
          transform=ax1.transAxes, va='top')
 
     ax2.hist(betas_best_func, bins=nbins, edgecolor='black')
@@ -658,7 +665,7 @@ def D_estimators (
     ax2.axvline(mean_beta_func + sigma_beta_func, color='red', linestyle=':')
     ax2.axvline(mean_beta_func - sigma_beta_func, color='red', linestyle=':')
     ax2.text(0.02, 0.95, rf'$\bar\beta = {mean_beta_func:.2e}$'
-         '\n' + rf'$\sigma = {sigma_beta_func:.2e}$',
+         '\n' + rf'$\ = {sigma_beta_func:.2e}$',
          transform=ax2.transAxes, va='top')
 
     plt.tight_layout()
@@ -702,9 +709,9 @@ def main():
     Cls_out_dir = root_dir + 'simulazione/spectra_out/'
     plots_dir = root_dir + 'simulazione/plots/'
 
-    newmaps = True  # se True, genera nuove mappe altrimenti carica quelle esistenti
+    newmaps = True # se True, genera nuove mappe altrimenti carica quelle esistenti
     new_spectra = True # se True, genera nuovi spettri, altrimenti carica quelli già esistenti
-    real_mask = True  # se True, importa una maschera altrimenti genera una maschera identità
+    real_mask = True # se True, importa una maschera altrimenti genera una maschera identità
     is_Dell= True
     
     purify_e = False
@@ -762,13 +769,13 @@ def main():
                         cl_TT_th, cl_EE_th, cl_BB_th, cl_TE_th,
                         ell_arr, plots_dir, nsims, lmax, real_mask, 
                         sigma_noise)
-    exit()
+    
 
     D_estimators(nsims, Cls_out_dir, lmax, 
                  lmin, deltal, std_Cls, 
                  mean_Cls, plots_dir, P,
                  Pt,sigma_noise,var,
-                 Cls_th)
+                 Cls_th,Cls_dir)
 
 
 main()
