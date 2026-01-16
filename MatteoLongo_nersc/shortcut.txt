@@ -1,0 +1,15 @@
+
+# --Shortcut nersc--
+alias nersc_mounts="cd path_locale; cd home_nersc;sshfs tuoaccount@perlmutter.nersc.gov:///global/homes/m/tuoaccount/ .;cd ..;cd scratch_nersc;sshfs tuoaccount@perlmutter.nersc.gov:///global/cscratch1/sd/tuoaccount ."
+alias nersc="ssh -Y tuoaccount@perlmutter.nersc.gov"
+
+# --Copiare al NERSC su SCRATCH--
+scp -r cartella_locale_da_copiare tuoaccount00@perlmutter.nersc.gov://pscratch/sd/m/tuoaccount/
+
+# --Copiare al NERSC su HOME--
+scp -r cartella_locale_da_copiare tuoaccount00@perlmutter.nersc.gov:///global/homes/m/tuoaccount/ 
+
+
+# --VS CODE--
+vedi copilot
+
